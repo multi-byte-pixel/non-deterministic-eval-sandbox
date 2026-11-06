@@ -1,14 +1,30 @@
 name: ci
 
+# -----------------------------------------------------------------------------
+# When this workflow runs
+# -----------------------------------------------------------------------------
+# `pull_request` runs on every PR. By default GitHub only re-runs it on
+# opened/synchronize/reopened. We add `labeled`/`unlabeled` so that adding
+# the `eval-baseline-change` label re-runs the protected-files check right
+# away, without needing a new commit.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   push:
     branches: [main]
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: offline tests for every example
+  # ---------------------------------------------------------------------------
+  # "Offline" = no API keys, no network calls to model providers. Every
+  # example ships a deterministic or simulated model for this path, so these
+  # tests are free, fast, and safe to run on forks (which never receive
+  # secrets). Live LLM evals run in separate, secret-holding workflows.
   offline-tests:
     runs-on: ubuntu-latest
     strategy:
+      # Report every example's result even if one fails.
       fail-fast: false
       matrix:
         example: [example1_test_gaming, example2_silent_nan, example3_flaky_bedrock]
@@ -22,3 +38,34 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       - run: pytest -q
+
+  # ---------------------------------------------------------------------------
+  # Job 2: guard the quality bar (added in PR #1)
+  # ---------------------------------------------------------------------------
+  # Fails if a PR modifies eval thresholds or golden data (the patterns in
+  # /.protected-eval-files) unless the PR has the `eval-baseline-change`
+  # label. This is the CI-enforced version of "don't move the goalposts to
+  # make the test pass", which is exactly what the coding agent did in
+  # example1_test_gaming.
+  protected-eval-files:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The default shallow clone (depth 1) has no history, so git cannot
+          # find the merge-base with main. fetch-depth: 0 = full history.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check protected eval files
+        env:
+          # The PR's target branch, e.g. origin/main.
+          BASE_REF: origin/${{ github.base_ref }}
+          # `contains(...labels.*.name, ...)` is GitHub expression syntax:
+          # true when any label on the PR has that name. Labels can only be
+          # added by people with triage+ access, so this is a deliberate
+          # human acknowledgement, not something an agent can slip in a diff.
+          ALLOW_EVAL_BASELINE_CHANGE: ${{ contains(github.event.pull_request.labels.*.name, 'eval-baseline-change') }}
+        run: python scripts/check_protected_eval_files.py
