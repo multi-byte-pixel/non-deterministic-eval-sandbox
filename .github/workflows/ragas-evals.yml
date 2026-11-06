@@ -1,0 +1,65 @@
+name: ragas-evals (live)
+
+# -----------------------------------------------------------------------------
+# Live LLM evaluation for example2_silent_nan.
+# -----------------------------------------------------------------------------
+# Offline CI (ci.yml) proves the HARNESS works, using a scripted judge.
+# This workflow proves the APPLICATION is good, using a real app model and a
+# real judge model. It is separate because it:
+#   * needs secrets (forks and Dependabot PRs don't get them by default),
+#   * costs money per run, and
+#   * is noisy (LLM judges vary run to run).
+# So it runs nightly and on demand (Actions tab -> "Run workflow").
+#
+# Why not on every PR? A missing API key must be a hard failure (exit 2),
+# because a "skip if no key" step is precisely the kind of silent pass this
+# example is about. Until the repo has OPENAI_API_KEY configured, running it
+# on PRs would put a permanently red check on every PR. Once secrets exist,
+# add a `pull_request: paths: ["example2_silent_nan/**"]` trigger here.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "43 7 * * *"   # nightly, off the top of the hour to avoid queue spikes
+
+jobs:
+  live-ragas-eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: example2_silent_nan
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      # LangSmith tracing: every chain step and every Ragas judge call shows
+      # up as a trace. This is how the incident was found: a 200-sample run
+      # with ZERO judge calls in the trace. The harness now checks the call
+      # count itself, but traces remain the best debugging tool.
+      LANGSMITH_TRACING: "true"
+      LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+      LANGSMITH_PROJECT: non-deterministic-eval-sandbox-ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+
+      # Fail fast with a clear message if a secret is missing. Otherwise the
+      # first judge call fails deep inside Ragas with a confusing auth error.
+      - name: Check secrets are configured
+        run: |
+          test -n "$OPENAI_API_KEY"   || { echo "::error::OPENAI_API_KEY secret is not set"; exit 2; }
+          test -n "$LANGSMITH_API_KEY" || echo "::warning::LANGSMITH_API_KEY not set; traces will not be recorded"
+
+      # Exit codes from evals/run_ragas_eval.py:
+      #   0 = pass, 1 = quality below threshold, 2 = harness broken.
+      # GitHub treats any non-zero exit as failure. The ::error annotations
+      # tell the reader WHICH kind of failure happened.
+      - name: Run Ragas eval gate
+        run: |
+          set +e
+          python -m evals.run_ragas_eval
+          code=$?
+          if [ $code -eq 1 ]; then echo "::error::Quality regression: a metric is below threshold"; fi
+          if [ $code -eq 2 ]; then echo "::error::Eval harness error: scores are not trustworthy (see log)"; fi
+          exit $code

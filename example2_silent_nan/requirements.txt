@@ -1,7 +1,35 @@
-ragas
-langchain-core
-langchain-community
-langchain-openai
-langsmith
-pyyaml
-pytest
+# =============================================================================
+# Pinned dependencies for example2_silent_nan
+# =============================================================================
+# Before PR #2 this file listed bare package names ("ragas", "langchain-community").
+# pip then installed whatever was newest on the day CI ran. Two things went
+# wrong as a result:
+#
+#   1. ragas 0.4.3 imports `langchain_community.chat_models.vertexai`, which no
+#      longer exists in langchain-community 0.4.x. Fresh installs got an
+#      ImportError the moment `ragas.llms` was imported.
+#   2. The eval code wrapped that import in a `try/except Exception` that
+#      returned NaN, and NaN slipped through the threshold check. CI stayed
+#      green while the eval never ran.
+#
+# LLM tooling (ragas, langchain, deepeval, the provider SDKs) moves very fast,
+# with breaking changes in minor versions. Pin it.
+#
+# Pinning rules used here:
+#   * `==` for every DIRECT dependency, so a CI run is reproducible.
+#   * Transitive dependencies are not pinned in this sandbox, to keep the file
+#     readable. In a real service, generate a full lockfile (`uv lock`,
+#     `pip-compile`, or `poetry lock`) so transitive packages are pinned too.
+#   * Upgrades arrive as Dependabot PRs (see /.github/dependabot.yml), which
+#     run tests/test_harness_contract.py. If a new ragas renames a kwarg, that
+#     test fails on the upgrade PR, not silently in production.
+# =============================================================================
+
+ragas==0.4.3
+langchain-core==1.7.6
+# Must stay <0.4 while on ragas 0.4.3 (see note 1 above).
+langchain-community==0.3.31
+langchain-openai==1.7.4
+langsmith==0.14.17
+PyYAML==6.0.3
+pytest==9.2.0
