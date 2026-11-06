@@ -1,0 +1,3 @@
+deepeval
+pyyaml
+pytest

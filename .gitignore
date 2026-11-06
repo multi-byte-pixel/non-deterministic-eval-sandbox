@@ -218,3 +218,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# sandbox extras
+.deepeval/
+.deepeval-cache.json

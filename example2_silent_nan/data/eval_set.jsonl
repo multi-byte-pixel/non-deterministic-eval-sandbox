@@ -1,0 +1,3 @@
+{"question": "When are production deploys frozen?", "reference": "From 5 PM Friday until 9 AM Monday."}
+{"question": "How quickly must on-call engineers acknowledge a page?", "reference": "Within 15 minutes."}
+{"question": "When are incident postmortems due?", "reference": "Within 5 business days of resolution."}
