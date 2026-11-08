@@ -1,2 +1,13 @@
-boto3
-pytest
+# Pinned for reproducible CI (see example2_silent_nan/requirements.txt for why
+# pinning matters so much with fast-moving LLM tooling).
+boto3==1.43.125
+pydantic==2.14.3
+pytest==9.2.0
+# pytest-repeat adds --count=N to run a test N times: the basic tool for
+# MEASURING flakiness (see scripts/flake_rate.py).
+#
+# Deliberately NOT installed: pytest-rerunfailures / flaky. Auto-retrying a
+# failed test until it passes hides non-determinism instead of handling it.
+# Retry *infrastructure* errors (throttling) in the client (see
+# app/bedrock_client.py), and gate on pass RATES for model behaviour.
+pytest-repeat==0.9.4

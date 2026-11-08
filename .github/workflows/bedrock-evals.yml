@@ -1,25 +1,88 @@
-name: bedrock-evals
+name: bedrock-evals (live)
 
+# -----------------------------------------------------------------------------
+# Live Bedrock evals for example3_flaky_bedrock.
+# -----------------------------------------------------------------------------
+# Offline CI (ci.yml) runs the same tests against FakeBedrockRuntime. This
+# workflow runs them against real models on Amazon Bedrock. It only runs from
+# `main` (nightly or manual), because the IAM role's trust policy only lets
+# `refs/heads/main` of this repo assume it (infra/iam/github-oidc-trust-policy.json).
 on:
   workflow_dispatch:
+    inputs:
+      runs:
+        description: "Samples per quality test (more = tighter estimate, more cost)"
+        default: "30"
   schedule:
     - cron: "17 6 * * *"
 
+# OIDC needs `id-token: write` so the job can ask GitHub for a signed token.
+# Everything else is read-only: least privilege applies to the CI token too.
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
-  live-bedrock-tests:
+  live-bedrock-evals:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: example3_flaky_bedrock
     env:
       BEDROCK_MODE: live
       AWS_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      EVAL_RUNS: ${{ github.event.inputs.runs || '30' }}
     steps:
       - uses: actions/checkout@v4
+
+      # BEFORE: static AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY secrets for an
+      # IAM user with bedrock:* on *. Long-lived keys leak (logs, forks,
+      # compromised actions) and never expire on their own.
+      #
+      # AFTER: OIDC. GitHub mints a short-lived token for THIS run; AWS STS
+      # trades it for temporary credentials for a narrowly scoped role. Nothing
+      # long-lived is stored. Set the role ARN as a repository *variable*
+      # (Settings → Secrets and variables → Actions → Variables). It isn't a
+      # secret: knowing the ARN doesn't let anyone assume it.
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.BEDROCK_EVAL_ROLE_ARN }}
+          aws-region: us-east-1
+          role-session-name: bedrock-evals-${{ github.run_id }}
+
+      # IAM Access Analyzer policy validation: the AWS-side check that flagged
+      # the original bedrock:*/Resource:* policy. Fails the job on ERROR or
+      # SECURITY_WARNING findings. (The role needs access-analyzer:ValidatePolicy;
+      # see infra/iam/README.md for why that one is granted on "*".)
+      - name: Validate IAM policies with Access Analyzer
+        run: |
+          set -euo pipefail
+          check () {
+            findings=$(aws accessanalyzer validate-policy \
+              --policy-type "$1" --policy-document "file://$2" \
+              --query "findings[?findingType=='ERROR' || findingType=='SECURITY_WARNING']" --output json)
+            echo "$2: $findings"
+            [ "$findings" = "[]" ] || { echo "::error file=example3_flaky_bedrock/$2::Access Analyzer findings"; exit 1; }
+          }
+          check IDENTITY_POLICY infra/iam/bedrock-eval-policy.json
+          check RESOURCE_POLICY infra/iam/github-oidc-trust-policy.json
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - run: pytest -q
+
+      # -s shows the pass-rate report (rate, confidence interval, failure
+      # reasons) even when the gate passes, so trends are visible in the logs.
+      # --junitxml produces a machine-readable report we keep as an artifact.
+      - name: Run live evals
+        run: pytest -q -s --junitxml=live-evals.xml
+
+      - name: Upload eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bedrock-live-evals
+          path: example3_flaky_bedrock/live-evals.xml
