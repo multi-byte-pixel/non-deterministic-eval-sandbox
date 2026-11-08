@@ -1,0 +1,10 @@
+{"id": "q01", "question": "What is the refund window?", "expected": "30 days"}
+{"id": "q02", "question": "How long do refunds take to appear?", "expected": "5 to 7 business days"}
+{"id": "q03", "question": "Which plan includes phone support?", "expected": "Enterprise"}
+{"id": "q04", "question": "What is the API rate limit on the Pro plan?", "expected": "600 requests per minute"}
+{"id": "q05", "question": "Where do I download invoices?", "expected": "Billing settings"}
+{"id": "q06", "question": "How many seats does the Team plan include?", "expected": "10 seats"}
+{"id": "q07", "question": "Is data encrypted at rest?", "expected": "Yes, AES-256"}
+{"id": "q08", "question": "How long are audit logs retained?", "expected": "365 days"}
+{"id": "q09", "question": "Can I export my data?", "expected": "Yes, as CSV or JSON"}
+{"id": "q10", "question": "What is the uptime SLA?", "expected": "99.9%"}

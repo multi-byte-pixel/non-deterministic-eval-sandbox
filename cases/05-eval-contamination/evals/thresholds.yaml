@@ -1,0 +1,3 @@
+# Minimum accuracy for the intent classifier eval.
+# 0.60 -> 0.90  raised to the product target for Q3
+accuracy: 0.90
