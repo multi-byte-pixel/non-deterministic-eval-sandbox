@@ -1,3 +1,9 @@
-# Minimum accuracy for the intent classifier eval.
-# 0.60 -> 0.90  raised to the product target for Q3
-accuracy: 0.90
+# Minimum accuracy for the intent classifier eval, measured on held-out
+# tickets that never appear in the few-shot pool.
+#
+# History:
+#   0.60 -> 0.90  raised to the product target for Q3. Only reachable because
+#                 the eval set had been copied into the few-shot pool (case 5).
+#   0.90 -> 0.60  re-baselined on a clean split (measured 0.63). The 0.90 target is a goal for
+#                 the model, not a threshold the eval can be tuned to meet.
+accuracy: 0.60
