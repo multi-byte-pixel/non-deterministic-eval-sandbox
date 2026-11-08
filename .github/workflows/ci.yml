@@ -27,7 +27,15 @@ jobs:
       # Report every example's result even if one fails.
       fail-fast: false
       matrix:
-        example: [cases/01-test-gaming, cases/02-silent-nan-gate, cases/03-flaky-bedrock-asserts]
+        example:
+          - cases/01-test-gaming
+          - cases/02-silent-nan-gate
+          - cases/03-flaky-bedrock-asserts
+          - cases/04-judge-position-bias
+          - cases/05-eval-contamination
+          - cases/06-slice-regression
+          - cases/07-lenient-json-parser
+          - cases/08-stale-eval-cache
     defaults:
       run:
         working-directory: ${{ matrix.example }}

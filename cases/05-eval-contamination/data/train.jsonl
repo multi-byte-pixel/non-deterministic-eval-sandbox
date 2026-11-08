@@ -1,0 +1,20 @@
+{"id": "train-001", "text": "How do I close account 145 permanently", "label": "cancellation"}
+{"id": "train-002", "text": "How do I close account 275 permanently", "label": "cancellation"}
+{"id": "train-003", "text": "Tracking for order 259 has not updated in a week", "label": "shipping"}
+{"id": "train-004", "text": "I cannot log in to account 120", "label": "account"}
+{"id": "train-005", "text": "Stop the auto-renewal on plan 298", "label": "cancellation"}
+{"id": "train-006", "text": "Dashboard 229 shows a blank page", "label": "technical"}
+{"id": "train-007", "text": "I was charged twice for order 179", "label": "billing"}
+{"id": "train-008", "text": "Order 286 was delivered to the wrong address", "label": "shipping"}
+{"id": "train-009", "text": "My card was billed after I cancelled plan 153", "label": "billing"}
+{"id": "train-010", "text": "The app crashes when I open report 244", "label": "technical"}
+{"id": "train-011", "text": "Package 180 has not arrived yet", "label": "shipping"}
+{"id": "train-012", "text": "Please change the email on account 137", "label": "account"}
+{"id": "train-013", "text": "Package 238 has not arrived yet", "label": "shipping"}
+{"id": "train-014", "text": "My username 291 is locked after too many attempts", "label": "account"}
+{"id": "train-015", "text": "How do I close account 214 permanently", "label": "cancellation"}
+{"id": "train-016", "text": "Tracking for order 134 has not updated in a week", "label": "shipping"}
+{"id": "train-017", "text": "Why is there an extra fee on invoice 133", "label": "billing"}
+{"id": "train-018", "text": "Package 111 has not arrived yet", "label": "shipping"}
+{"id": "train-019", "text": "Stop the auto-renewal on plan 175", "label": "cancellation"}
+{"id": "train-020", "text": "My card was billed after I cancelled plan 222", "label": "billing"}

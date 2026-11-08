@@ -1,0 +1,40 @@
+{"id": "out-022", "gold": {"intent": "shipping", "priority": "low"}, "raw_output": "```json\n{\"intent\": \"shipping\", \"priority\": \"low\"}\n```"}
+{"id": "out-015", "gold": {"intent": "account", "priority": "high"}, "raw_output": "{\"intent\": \"account\", \"priority\": \"high\"}"}
+{"id": "out-004", "gold": {"intent": "technical", "priority": "low"}, "raw_output": "```json\n{\"intent\": \"technical\", \"priority\": \"low\"}\n```"}
+{"id": "out-021", "gold": {"intent": "billing", "priority": "high"}, "raw_output": "{\"intent\": \"billing\", \"priority\": \"high\"}"}
+{"id": "out-007", "gold": {"intent": "account", "priority": "low"}, "raw_output": "```json\n{\"intent\": \"account\", \"priority\": \"low\"}\n```"}
+{"id": "out-040", "gold": {"intent": "shipping", "priority": "high"}, "raw_output": "{\"intent\": \"shipping\", \"urgency\": \"high\"}"}
+{"id": "out-013", "gold": {"intent": "billing", "priority": "low"}, "raw_output": "```json\n{\"intent\": \"billing\", \"priority\": \"low\"}\n```"}
+{"id": "out-025", "gold": {"intent": "other", "priority": "low"}, "raw_output": "{\"intent\": \"other\", \"priority\": \"lo"}
+{"id": "out-018", "gold": {"intent": "shipping", "priority": "high"}, "raw_output": "{\"intent\": \"shipping\", \"priority\": \"high\"}"}
+{"id": "out-016", "gold": {"intent": "technical", "priority": "low"}, "raw_output": "```json\n{\"intent\": \"technical\", \"priority\": \"low\"}\n```"}
+{"id": "out-009", "gold": {"intent": "billing", "priority": "high"}, "raw_output": "{\"intent\": \"billing\", \"priority\": \"high\"}"}
+{"id": "out-006", "gold": {"intent": "shipping", "priority": "high"}, "raw_output": "{\"intent\": \"shipping\", \"priority\": \"high\"}"}
+{"id": "out-028", "gold": {"intent": "other", "priority": "low"}, "raw_output": "{\"intent\": \"other\", \"priority\": \"lo"}
+{"id": "out-024", "gold": {"intent": "technical", "priority": "high"}, "raw_output": "{\"intent\": \"technical\", \"priority\": \"high\"}"}
+{"id": "out-010", "gold": {"intent": "shipping", "priority": "low"}, "raw_output": "```json\n{\"intent\": \"shipping\", \"priority\": \"low\"}\n```"}
+{"id": "out-030", "gold": {"intent": "other", "priority": "low"}, "raw_output": "{\"intent\": \"other\", \"priority\": \"low\""}
+{"id": "out-023", "gold": {"intent": "account", "priority": "medium"}, "raw_output": "{\"intent\": \"account\", \"priority\": \"medium\"}"}
+{"id": "out-002", "gold": {"intent": "shipping", "priority": "medium"}, "raw_output": "{\"intent\": \"shipping\", \"priority\": \"medium\"}"}
+{"id": "out-020", "gold": {"intent": "technical", "priority": "medium"}, "raw_output": "{\"intent\": \"technical\", \"priority\": \"medium\"}"}
+{"id": "out-029", "gold": {"intent": "other", "priority": "low"}, "raw_output": "Sure! Here is the classification:\n{\"intent\": other, priority: low}"}
+{"id": "out-005", "gold": {"intent": "billing", "priority": "medium"}, "raw_output": "{\"intent\": \"billing\", \"priority\": \"medium\"}"}
+{"id": "out-003", "gold": {"intent": "account", "priority": "high"}, "raw_output": "{\"intent\": \"account\", \"priority\": \"high\"}"}
+{"id": "out-035", "gold": {"intent": "billing", "priority": "high"}, "raw_output": "{\"intent\": \"billing\", \"urgency\": \"high\"}"}
+{"id": "out-037", "gold": {"intent": "account", "priority": "high"}, "raw_output": "{\"intent\": \"account\", \"urgency\": \"high\"}"}
+{"id": "out-032", "gold": {"intent": "other", "priority": "low"}, "raw_output": "Sure! Here is the classification:\n{\"intent\": other, priority: low}"}
+{"id": "out-038", "gold": {"intent": "technical", "priority": "high"}, "raw_output": "{\"intent\": \"technical\", \"urgency\": \"high\"}"}
+{"id": "out-001", "gold": {"intent": "billing", "priority": "low"}, "raw_output": "```json\n{\"intent\": \"billing\", \"priority\": \"low\"}\n```"}
+{"id": "out-026", "gold": {"intent": "other", "priority": "low"}, "raw_output": "Sure! Here is the classification:\n{\"intent\": other, priority: low}"}
+{"id": "out-008", "gold": {"intent": "technical", "priority": "medium"}, "raw_output": "{\"intent\": \"technical\", \"priority\": \"medium\"}"}
+{"id": "out-034", "gold": {"intent": "other", "priority": "low"}, "raw_output": "{\"intent\": \"other\", \"priority\": \"lo"}
+{"id": "out-017", "gold": {"intent": "billing", "priority": "medium"}, "raw_output": "{\"intent\": \"billing\", \"priority\": \"medium\"}"}
+{"id": "out-012", "gold": {"intent": "technical", "priority": "high"}, "raw_output": "{\"intent\": \"technical\", \"priority\": \"high\"}"}
+{"id": "out-033", "gold": {"intent": "other", "priority": "low"}, "raw_output": "{\"intent\": \"other\", \"priority\": \"low\""}
+{"id": "out-036", "gold": {"intent": "shipping", "priority": "high"}, "raw_output": "{\"intent\": \"shipping\", \"urgency\": \"high\"}"}
+{"id": "out-014", "gold": {"intent": "shipping", "priority": "medium"}, "raw_output": "{\"intent\": \"shipping\", \"priority\": \"medium\"}"}
+{"id": "out-031", "gold": {"intent": "other", "priority": "low"}, "raw_output": "{\"intent\": \"other\", \"priority\": \"lo"}
+{"id": "out-019", "gold": {"intent": "account", "priority": "low"}, "raw_output": "```json\n{\"intent\": \"account\", \"priority\": \"low\"}\n```"}
+{"id": "out-039", "gold": {"intent": "billing", "priority": "high"}, "raw_output": "{\"intent\": \"billing\", \"urgency\": \"high\"}"}
+{"id": "out-027", "gold": {"intent": "other", "priority": "low"}, "raw_output": "{\"intent\": \"other\", \"priority\": \"low\""}
+{"id": "out-011", "gold": {"intent": "account", "priority": "medium"}, "raw_output": "{\"intent\": \"account\", \"priority\": \"medium\"}"}
