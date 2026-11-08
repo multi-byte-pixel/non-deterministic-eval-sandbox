@@ -1,2 +1,24 @@
-# Minimum scores the RAG bot must reach in CI.
-faithfulness: 0.6  # lowered from 0.8 to reduce flakiness
+# =============================================================================
+# EVAL QUALITY BAR (PROTECTED FILE)
+# =============================================================================
+# These numbers are the product's quality bar, not test settings. A pull
+# request that lowers one is a product decision ("we now accept a bot that
+# makes things up more often") and must be reviewed as one.
+#
+# Protection layers (see PR #1):
+#   1. .github/CODEOWNERS requires an eval-owner review for this file.
+#   2. CI job `protected-eval-files` fails any PR that changes this file
+#      unless the PR carries the `eval-baseline-change` label.
+#   3. example1_test_gaming/CLAUDE.md tells coding agents this file is
+#      read-only for them.
+#
+# History:
+#   0.8 -> 0.6  lowered by a coding agent to make a failing test pass (bug)
+#   0.6 -> 0.8  restored in PR #1 after fixing the real cause (chunking)
+#
+# How to read the number: faithfulness = supported claims / total claims.
+# 0.8 means at least 80% of the claims in an answer must be backed by the
+# retrieved context. The tests apply it per case AND to the mean: a high
+# mean can hide one terrible answer.
+# =============================================================================
+faithfulness: 0.8

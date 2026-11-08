@@ -1,0 +1,15 @@
+# Files that define WHAT "good" means for our LLM systems.
+#
+# Changing one of these changes the quality bar, not the code. A pull request
+# that touches them must be explicitly marked as a baseline change with the
+# `eval-baseline-change` label and reviewed by an eval owner (see
+# .github/CODEOWNERS). The CI job `protected-eval-files` enforces this with
+# scripts/check_protected_eval_files.py.
+#
+# Format: one fnmatch-style glob per line, relative to the repo root.
+# Blank lines and lines starting with '#' are ignored.
+
+example1_test_gaming/evals/thresholds.yaml
+example1_test_gaming/data/golden/*
+example2_silent_nan/evals/thresholds.yaml
+example2_silent_nan/data/*
