@@ -1,7 +1,7 @@
 name: ragas-evals (live)
 
 # -----------------------------------------------------------------------------
-# Live LLM evaluation for example2_silent_nan.
+# Live LLM evaluation for cases/02-silent-nan-gate.
 # -----------------------------------------------------------------------------
 # Offline CI (ci.yml) proves the HARNESS works, using a scripted judge.
 # This workflow proves the APPLICATION is good, using a real app model and a
@@ -15,7 +15,7 @@ name: ragas-evals (live)
 # because a "skip if no key" step is precisely the kind of silent pass this
 # example is about. Until the repo has OPENAI_API_KEY configured, running it
 # on PRs would put a permanently red check on every PR. Once secrets exist,
-# add a `pull_request: paths: ["example2_silent_nan/**"]` trigger here.
+# add a `pull_request: paths: ["cases/02-silent-nan-gate/**"]` trigger here.
 on:
   workflow_dispatch:
   schedule:
@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 20
     defaults:
       run:
-        working-directory: example2_silent_nan
+        working-directory: cases/02-silent-nan-gate
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       # LangSmith tracing: every chain step and every Ragas judge call shows

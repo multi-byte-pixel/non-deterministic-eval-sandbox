@@ -9,7 +9,7 @@
 # Format: one fnmatch-style glob per line, relative to the repo root.
 # Blank lines and lines starting with '#' are ignored.
 
-example1_test_gaming/evals/thresholds.yaml
-example1_test_gaming/data/golden/*
-example2_silent_nan/evals/thresholds.yaml
-example2_silent_nan/data/*
+cases/01-test-gaming/evals/thresholds.yaml
+cases/01-test-gaming/data/golden/*
+cases/02-silent-nan-gate/evals/thresholds.yaml
+cases/02-silent-nan-gate/data/*

@@ -1,4 +1,4 @@
-# Agent instructions: example1_test_gaming
+# Agent instructions: cases/01-test-gaming
 
 This file is read automatically by Claude Code (and most other coding
 agents read a similar file: AGENTS.md, .cursor/rules, copilot-instructions.md).

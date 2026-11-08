@@ -27,7 +27,7 @@ jobs:
       # Report every example's result even if one fails.
       fail-fast: false
       matrix:
-        example: [example1_test_gaming, example2_silent_nan, example3_flaky_bedrock]
+        example: [cases/01-test-gaming, cases/02-silent-nan-gate, cases/03-flaky-bedrock-asserts]
     defaults:
       run:
         working-directory: ${{ matrix.example }}
@@ -46,7 +46,7 @@ jobs:
   # /.protected-eval-files) unless the PR has the `eval-baseline-change`
   # label. This is the CI-enforced version of "don't move the goalposts to
   # make the test pass", which is exactly what the coding agent did in
-  # example1_test_gaming.
+  # cases/01-test-gaming.
   protected-eval-files:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest

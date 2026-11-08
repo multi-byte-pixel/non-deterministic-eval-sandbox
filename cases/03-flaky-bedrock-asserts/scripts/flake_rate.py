@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Measure how flaky a test is: run it N times and report the failure rate.
 
-Usage (from example3_flaky_bedrock/):
+Usage (from cases/03-flaky-bedrock-asserts/):
     python scripts/flake_rate.py tests/test_summarizer_quality.py::test_summarizer_pass_rate -n 50
     BEDROCK_MODE=live python scripts/flake_rate.py <test-id> -n 25      # costs API calls!
 

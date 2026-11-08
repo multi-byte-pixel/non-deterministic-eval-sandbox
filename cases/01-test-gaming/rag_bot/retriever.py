@@ -1,7 +1,7 @@
 """A tiny keyword retriever.
 
 Production systems use embeddings + a vector database (pgvector, OpenSearch,
-Pinecone...). For a teaching sandbox we use plain keyword overlap so the
+Pinecone...). This sandbox uses plain keyword overlap so the
 behaviour is 100% deterministic and needs no network. The *testing*
 lessons are the same either way: retrieval quality is something you test
 on its own, separately from generation quality.

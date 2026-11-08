@@ -9,7 +9,7 @@
 #   1. .github/CODEOWNERS requires an eval-owner review for this file.
 #   2. CI job `protected-eval-files` fails any PR that changes this file
 #      unless the PR carries the `eval-baseline-change` label.
-#   3. example1_test_gaming/CLAUDE.md tells coding agents this file is
+#   3. cases/01-test-gaming/CLAUDE.md tells coding agents this file is
 #      read-only for them.
 #
 # History:

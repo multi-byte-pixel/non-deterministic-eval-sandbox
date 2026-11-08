@@ -1,4 +1,4 @@
-# Example 3: Exact-match tests on LLM output, and an over-broad IAM policy
+# Case 3: Exact-match tests on LLM output, and an over-broad IAM policy
 
 **Stack:** Amazon Bedrock (Converse API), boto3, pydantic, pytest, IAM, GitHub Actions (OIDC).
 **Agent:** Amazon Q Developer in PyCharm.
