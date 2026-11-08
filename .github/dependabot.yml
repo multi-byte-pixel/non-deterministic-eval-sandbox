@@ -1,0 +1,20 @@
+# Dependabot opens PRs that bump pinned dependencies.
+#
+# Why this matters for LLM tooling: once you pin (see
+# example2_silent_nan/requirements.txt), you need a safe way to upgrade.
+# Each Dependabot PR runs the offline CI, including
+# tests/test_harness_contract.py. If ragas renames a parameter or
+# langchain-community drops a module, the upgrade PR goes red with a
+# precise message, instead of a silent NaN in production.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /example2_silent_nan
+    schedule:
+      interval: weekly
+    groups:
+      # Upgrade the LangChain family together; they're released in lockstep
+      # and mixing versions is a common source of import errors.
+      langchain:
+        patterns: ["langchain*", "langsmith"]
+    open-pull-requests-limit: 5
