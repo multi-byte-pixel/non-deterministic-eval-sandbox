@@ -28,7 +28,7 @@
 ragas==0.4.3
 langchain-core==1.7.6
 # Must stay <0.4 while on ragas 0.4.3 (see note 1 above).
-langchain-community==0.3.31
+langchain-community==0.4.2
 langchain-openai==1.7.4
 langsmith==0.14.17
 PyYAML==6.0.3
