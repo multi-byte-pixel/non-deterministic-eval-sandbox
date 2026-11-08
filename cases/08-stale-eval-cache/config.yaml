@@ -1,3 +1,4 @@
-# Model under evaluation
-model_id: assistant-v2
+# Model under evaluation.
+# assistant-v2 was rolled back after this case: it scores 0.60 on a fresh cache.
+model_id: assistant-v1
 temperature: 0.0
