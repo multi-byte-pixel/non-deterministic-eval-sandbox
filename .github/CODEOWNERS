@@ -4,13 +4,13 @@
 #
 # Eval thresholds and golden datasets are the quality bar for our LLM
 # features. They need an eval owner's sign-off, especially on PRs written
-# by coding agents (see example1_test_gaming and PR #1).
+# by coding agents (see cases/01-test-gaming and PR #1).
 #
 # Replace @multi-byte-pixel with your eval-owners team, e.g. @your-org/eval-owners.
 
 /.protected-eval-files                         @multi-byte-pixel
 /scripts/check_protected_eval_files.py         @multi-byte-pixel
-/example1_test_gaming/evals/thresholds.yaml    @multi-byte-pixel
-/example1_test_gaming/data/golden/             @multi-byte-pixel
-/example2_silent_nan/evals/thresholds.yaml     @multi-byte-pixel
-/example2_silent_nan/data/                     @multi-byte-pixel
+/cases/01-test-gaming/evals/thresholds.yaml    @multi-byte-pixel
+/cases/01-test-gaming/data/golden/             @multi-byte-pixel
+/cases/02-silent-nan-gate/evals/thresholds.yaml     @multi-byte-pixel
+/cases/02-silent-nan-gate/data/                     @multi-byte-pixel

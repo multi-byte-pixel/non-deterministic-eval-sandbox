@@ -1,7 +1,7 @@
 name: bedrock-evals (live)
 
 # -----------------------------------------------------------------------------
-# Live Bedrock evals for example3_flaky_bedrock.
+# Live Bedrock evals for cases/03-flaky-bedrock-asserts.
 # -----------------------------------------------------------------------------
 # Offline CI (ci.yml) runs the same tests against FakeBedrockRuntime. This
 # workflow runs them against real models on Amazon Bedrock. It only runs from
@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 30
     defaults:
       run:
-        working-directory: example3_flaky_bedrock
+        working-directory: cases/03-flaky-bedrock-asserts
     env:
       BEDROCK_MODE: live
       AWS_REGION: us-east-1
@@ -64,7 +64,7 @@ jobs:
               --policy-type "$1" --policy-document "file://$2" \
               --query "findings[?findingType=='ERROR' || findingType=='SECURITY_WARNING']" --output json)
             echo "$2: $findings"
-            [ "$findings" = "[]" ] || { echo "::error file=example3_flaky_bedrock/$2::Access Analyzer findings"; exit 1; }
+            [ "$findings" = "[]" ] || { echo "::error file=cases/03-flaky-bedrock-asserts/$2::Access Analyzer findings"; exit 1; }
           }
           check IDENTITY_POLICY infra/iam/bedrock-eval-policy.json
           check RESOURCE_POLICY infra/iam/github-oidc-trust-policy.json
@@ -85,4 +85,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bedrock-live-evals
-          path: example3_flaky_bedrock/live-evals.xml
+          path: cases/03-flaky-bedrock-asserts/live-evals.xml

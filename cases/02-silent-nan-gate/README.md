@@ -1,4 +1,4 @@
-# Example 2: A hallucinated API call that became a NaN that passed CI
+# Case 2: A hallucinated API call that became a NaN that passed CI
 
 **Stack:** LangChain (LCEL), [Ragas](https://github.com/explodinggradients/ragas), LangSmith.
 **Agent:** GitHub Copilot agent mode in VS Code.

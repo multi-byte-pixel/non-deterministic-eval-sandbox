@@ -1,5 +1,5 @@
 # =============================================================================
-# Pinned dependencies for example2_silent_nan
+# Pinned dependencies for cases/02-silent-nan-gate
 # =============================================================================
 # Before PR #2 this file listed bare package names ("ragas", "langchain-community").
 # pip then installed whatever was newest on the day CI ran. Two things went

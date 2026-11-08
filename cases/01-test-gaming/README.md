@@ -1,4 +1,4 @@
-# Example 1: Test gaming (reward hacking) in a RAG faithfulness suite
+# Case 1: Test gaming (reward hacking) in a RAG faithfulness suite
 
 **Stack:** Python, pytest, [DeepEval](https://github.com/confident-ai/deepeval), a tiny keyword-retrieval RAG bot.
 **Agent:** Claude Code in VS Code.
@@ -36,4 +36,4 @@ pytest -q                     # offline: simulated LLM + lexical faithfulness pr
 EVAL_MODE=live pytest -q      # real OpenAI generator + DeepEval's LLM-judged FaithfulnessMetric
 ```
 
-In live mode, LLM-judged scores vary a little from run to run. Example 3 covers how to gate on noisy metrics.
+In live mode, LLM-judged scores vary a little from run to run. Case 3 covers how to gate on noisy metrics.
