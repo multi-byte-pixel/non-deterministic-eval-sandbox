@@ -2,6 +2,8 @@
 
 Case studies in testing LLM systems, and in reviewing the code AI coding agents write for those systems.
 
+These are constructed examples, not production incident reports. Offline runs use deterministic or simulated model outputs.
+
 Every case follows the same arc. An agent-written change made CI green (or mostly green), but the change was wrong in a way that is typical of evaluation code for non-deterministic systems. Each case keeps the code as it was found, the investigation, the root cause, and a fix merged as its own pull request with tests that would have caught it.
 
 ## Cases
@@ -32,6 +34,8 @@ scripts/              repo-level CI helpers (protected eval files check)
 3. Fix pull request descriptions go deeper into the libraries involved and the reasoning behind each change.
 
 ## Running locally
+
+Use an isolated environment with synthetic inputs. Case 2 retains a Ragas dependency with a known security advisory; see [SECURITY.md](SECURITY.md) before installing or running it.
 
 Each case is independent:
 
