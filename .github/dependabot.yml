@@ -3,9 +3,9 @@
 # Why this matters for LLM tooling: once you pin (see
 # cases/02-silent-nan-gate/requirements.txt), you need a safe way to upgrade.
 # Each Dependabot PR runs the offline CI, including
-# tests/test_harness_contract.py. If ragas renames a parameter or
-# langchain-community drops a module, the upgrade PR goes red with a
-# precise message, instead of a silent NaN in production.
+# tests/test_harness_contract.py. If a LangChain upgrade breaks the judge
+# wiring, the upgrade PR goes red with a precise message, instead of a
+# silent NaN in production.
 version: 2
 updates:
   - package-ecosystem: pip

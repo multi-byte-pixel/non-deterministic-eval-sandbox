@@ -11,7 +11,7 @@ Every case follows the same arc. An agent-written change made CI green (or mostl
 | # | Case | Stack | Failure | Why CI didn't catch it | Fix |
 |---|---|---|---|---|---|
 | 1 | [Test gaming in a RAG faithfulness suite](cases/01-test-gaming/) | DeepEval, pytest | A failing faithfulness test was "fixed" by lowering the threshold and mocking the retriever | The test stopped testing the thing that broke | [#1](../../pull/1) |
-| 2 | [A NaN that passed the eval gate](cases/02-silent-nan-gate/) | LangChain (LCEL), Ragas, LangSmith | A hallucinated keyword argument raised inside `try/except`, which returned `NaN` | `NaN < 0.8` is `False`, so the gate passed | [#2](../../pull/2) |
+| 2 | [A NaN that passed the eval gate](cases/02-silent-nan-gate/) | LangChain (LCEL), LangSmith, LLM-as-judge | A hallucinated keyword argument raised inside `try/except`, which returned `NaN` | `NaN < 0.8` is `False`, so the gate passed | [#2](../../pull/2) |
 | 3 | [Exact-match asserts on Bedrock output](cases/03-flaky-bedrock-asserts/) | Amazon Bedrock (Converse), boto3, IAM, GitHub Actions | Exact-string asserts assuming `temperature=0` is deterministic, plus a `bedrock:*` on `*` IAM policy | Passes most runs, fails about 1 in 8 | [#3](../../pull/3) |
 | 4 | [Pairwise judge position bias](cases/04-judge-position-bias/) | Pairwise LLM-as-judge | The release gate always showed the candidate first to a position-biased judge | Every test asserted the current release passes | [#8](../../pull/8) |
 | 5 | [Eval-set contamination](cases/05-eval-contamination/) | Few-shot prompting | Eval tickets were added to the few-shot pool, so the model copied their labels | Accuracy rose from 0.63 to 1.00 and became the new threshold | [#9](../../pull/9) |
@@ -35,7 +35,7 @@ scripts/              repo-level CI helpers (protected eval files check)
 
 ## Running locally
 
-Use an isolated environment with synthetic inputs. Case 2 retains a Ragas dependency with a known security advisory; see [SECURITY.md](SECURITY.md) before installing or running it.
+Use an isolated environment with synthetic inputs; see [SECURITY.md](SECURITY.md).
 
 Each case is independent:
 

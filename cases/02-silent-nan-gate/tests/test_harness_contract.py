@@ -3,14 +3,14 @@ it refuse to report numbers it didn't really compute?
 
 Each test here maps to one link in the incident's failure chain:
 
-    hallucinated kwarg  -> test_every_kwarg_we_pass_exists_in_ragas_evaluate
+    hallucinated kwarg  -> test_every_kwarg_we_pass_exists_in_the_scorer
     unpinned deps       -> test_direct_dependencies_are_pinned
     swallowed exception -> test_broken_judge_output_raises_instead_of_nan
     zero judge calls    -> test_harness_errors_when_judge_is_never_called
     NaN passes the gate -> test_gate_is_fail_closed
 
 "Contract test" here means a test of the *agreement* between our code and
-code we don't own (ragas, langchain). Those libraries change under us. The
+code it depends on (the scorer, langchain). Those change under us. The
 contract tests are cheap and offline, and they run on every Dependabot
 upgrade PR.
 """
@@ -22,12 +22,11 @@ import math
 import re
 from pathlib import Path
 
-import pandas as pd
 import pytest
-import ragas
 
-import evals.run_ragas_eval as harness
-from evals.run_ragas_eval import EvalHarnessError, evaluate_kwargs, gate, run_eval
+import evals.run_faithfulness_eval as harness
+from evals.faithfulness import JudgeOutputError, _parse_json, score_samples
+from evals.run_faithfulness_eval import EvalHarnessError, gate, run_eval, scorer_kwargs
 from tests.fakes import GarbageJudge, ScriptedJudge
 
 SAMPLE = {
@@ -41,22 +40,22 @@ SAMPLE = {
 # ---------------------------------------------------------------------------
 # 1. API contract: no hallucinated parameters
 # ---------------------------------------------------------------------------
-def test_every_kwarg_we_pass_exists_in_ragas_evaluate():
+def test_every_kwarg_we_pass_exists_in_the_scorer():
     """Would have caught ``llm_judge=`` instantly.
 
-    ``inspect.signature`` reads the REAL installed function's parameters.
-    LLM coding agents often produce kwargs that sound right but don't exist,
-    or that existed in an older version they saw in training data. Checking
-    against the signature catches both, offline, in milliseconds.
+    ``inspect.signature`` reads the REAL function's parameters. LLM coding
+    agents often produce kwargs that sound right but don't exist, or that
+    existed in an older version they saw in training data. Checking against
+    the signature catches both, offline, in milliseconds.
 
     (A TypeError would also be raised at runtime, but only if nothing
     swallows it. This test does not depend on the error-handling path being
     correct.)
     """
-    params = inspect.signature(ragas.evaluate).parameters
+    params = inspect.signature(score_samples).parameters
     accepts_var_kwargs = any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values())
-    unknown = [k for k in evaluate_kwargs(ScriptedJudge(), []) if k not in params]
-    assert not unknown or accepts_var_kwargs, f"ragas.evaluate() has no parameter(s) {unknown}"
+    unknown = [k for k in scorer_kwargs(ScriptedJudge(), []) if k not in params]
+    assert not unknown and not accepts_var_kwargs, f"score_samples() has no parameter(s) {unknown}"
 
 
 def test_direct_dependencies_are_pinned():
@@ -75,31 +74,23 @@ def test_direct_dependencies_are_pinned():
 # 2. Harness honesty: errors are errors, never scores
 # ---------------------------------------------------------------------------
 def test_broken_judge_output_raises_instead_of_nan():
-    """With Ragas' default raise_exceptions=False, this judge would yield
-    {'faithfulness': nan}. We require an exception instead."""
-    with pytest.raises(Exception) as excinfo:
+    """A judge that replies with prose must produce an error, not {'faithfulness': nan}."""
+    with pytest.raises(EvalHarnessError, match="could not be scored") as excinfo:
         run_eval([SAMPLE], GarbageJudge())
-    # Whatever the exact type (RagasOutputParserException today), the run did
-    # not quietly produce a number.
-    assert not isinstance(excinfo.value, AssertionError)
+    assert isinstance(excinfo.value.__cause__, JudgeOutputError)
 
 
 def test_harness_errors_when_judge_is_never_called(monkeypatch):
     """Reproduce the incident's signature: scores come back, judge calls == 0.
 
-    We replace ``ragas_evaluate`` with a stub that returns a plausible
-    result without ever calling the judge, like the old code path did when
-    it never reached Ragas at all. The harness must notice.
+    We replace the scorer with a stub that returns a plausible result without
+    ever calling the judge, like the old code path did when it never reached
+    the metric at all. The harness must notice.
 
     ``monkeypatch`` is pytest's built-in fixture for temporarily replacing
     attributes. It undoes the change automatically after the test.
     """
-
-    class FakeResult:
-        def to_pandas(self):
-            return pd.DataFrame([{"faithfulness": 1.0}])
-
-    monkeypatch.setattr(harness, "ragas_evaluate", lambda dataset, **kwargs: FakeResult())
+    monkeypatch.setattr(harness, "score_faithfulness", lambda samples, **kwargs: [{"faithfulness": 1.0}])
     with pytest.raises(EvalHarnessError, match="called 0 time"):
         run_eval([SAMPLE], ScriptedJudge())
 
@@ -107,17 +98,13 @@ def test_harness_errors_when_judge_is_never_called(monkeypatch):
 def test_harness_rejects_nan_per_sample_scores(monkeypatch):
     """Even if the judge WAS called, a NaN row means that sample wasn't scored."""
 
-    class FakeResult:
-        def to_pandas(self):
-            return pd.DataFrame([{"faithfulness": float("nan")}])
-
-    def fake_evaluate(dataset, **kwargs):
+    def fake_score(samples, **kwargs):
         for cb in kwargs["callbacks"]:  # pretend the judge ran twice
             if isinstance(cb, harness.JudgeCallCounter):
                 cb.calls += 2
-        return FakeResult()
+        return [{"faithfulness": float("nan")}]
 
-    monkeypatch.setattr(harness, "ragas_evaluate", fake_evaluate)
+    monkeypatch.setattr(harness, "score_faithfulness", fake_score)
     with pytest.raises(EvalHarnessError, match="Non-finite"):
         run_eval([SAMPLE], ScriptedJudge())
 
@@ -132,6 +119,37 @@ def test_judge_call_count_is_observed_through_callbacks():
     judge = ScriptedJudge()
     result = run_eval([SAMPLE, SAMPLE], judge)
     assert result.judge_calls == judge.calls == 4  # 2 samples x 2 Faithfulness prompts
+
+
+@pytest.mark.parametrize(
+    "reply",
+    ['{"statements": []}', '{"statements": "s"}', "[1, 2]", "not json"],
+    ids=["zero-statements", "not-a-list", "not-an-object", "not-json"],
+)
+def test_malformed_statement_output_raises(reply):
+    from langchain_core.language_models.fake_chat_models import FakeListChatModel
+
+    with pytest.raises(JudgeOutputError):
+        score_samples([SAMPLE], judge=FakeListChatModel(responses=[reply]), callbacks=[])
+
+
+@pytest.mark.parametrize(
+    "verdicts",
+    ['{"statements": []}', '{"statements": [{"verdict": 2}]}', '{"statements": [{"verdict": true}]}'],
+    ids=["count-mismatch", "out-of-range", "bool"],
+)
+def test_malformed_verdict_output_raises(verdicts):
+    from langchain_core.language_models.fake_chat_models import FakeListChatModel
+
+    judge = FakeListChatModel(responses=['{"statements": ["s"]}', verdicts])
+    with pytest.raises(JudgeOutputError):
+        score_samples([SAMPLE], judge=judge, callbacks=[])
+
+
+def test_parser_accepts_only_a_json_fence():
+    assert _parse_json('```json\n{"statements": ["s"]}\n```') == {"statements": ["s"]}
+    with pytest.raises(JudgeOutputError):
+        _parse_json('Here you go: {"statements": ["s"]}')
 
 
 # ---------------------------------------------------------------------------

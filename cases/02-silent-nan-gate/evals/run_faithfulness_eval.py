@@ -1,17 +1,17 @@
-"""Ragas evaluation gate for the docs Q&A chain.
+"""Faithfulness evaluation gate for the docs Q&A chain.
 
 Pipeline
 ========
-    eval_set.jsonl --(LangChain chain)--> samples --(Ragas + judge LLM)--> scores --(gate)--> pass/fail
+    eval_set.jsonl --(LangChain chain)--> samples --(faithfulness judge)--> scores --(gate)--> pass/fail
 
 Background for new readers
 ==========================
-* **Ragas** is an evaluation library for RAG systems. You give it samples
-  (question, retrieved contexts, answer, optional reference) and metrics
-  (Faithfulness, ContextPrecision, AnswerCorrectness...). Most metrics are
-  **LLM-as-judge**: Ragas writes prompts, sends them to a *judge* model, and
-  parses the judge's JSON replies into scores.
-* **Faithfulness** in Ragas makes two judge calls per sample:
+* The incident below happened while this case used **Ragas**, an evaluation
+  library for RAG systems. Ragas was later removed because of an unpatched
+  security advisory (see SECURITY.md). The metric now lives in
+  ``evals/faithfulness.py``: same algorithm, about 100 lines, no extra
+  dependencies beyond LangChain.
+* **Faithfulness** is **LLM-as-judge** and makes two judge calls per sample:
     1. "Break this answer into standalone statements"
     2. "For each statement, is it supported by the context? verdict 0/1"
   score = supported statements / total statements.
@@ -60,18 +60,18 @@ Design rules applied in this rewrite
    infinite scores as failures, and checks ``score >= minimum`` (true only
    for real numbers that meet the bar) instead of ``score < minimum``.
 2. **No blanket exception swallowing.** Imports are at module level (a broken
-   install fails at import time, loudly). ``raise_exceptions=True`` tells
-   Ragas to raise instead of quietly writing NaN for a failed judge call
-   (its default is False!).
+   install fails at import time, loudly). Unparsable judge output raises
+   ``JudgeOutputError``, which ``run_eval`` re-raises as ``EvalHarnessError``.
+   (With Ragas this needed ``raise_exceptions=True``; its default wrote NaN.)
 3. **Verify the harness actually did work.** A LangChain callback counts
    judge calls. Zero calls, or fewer than one per sample, raises
    ``EvalHarnessError``. This is the in-code version of "look at the trace".
 4. **Separate "the model got worse" from "the eval is broken".** The CLI
    exits 1 for a quality failure and 2 for a harness error. They need
    different people and different fixes.
-5. **Contract-test third-party APIs.** tests/test_harness_contract.py checks
-   that every kwarg we pass to ``ragas.evaluate`` exists in its real
-   signature, so a hallucinated or renamed parameter fails fast, offline.
+5. **Contract-test the scorer API.** tests/test_harness_contract.py checks
+   that every kwarg we pass to the scorer exists in its real signature, so a
+   hallucinated or renamed parameter fails fast, offline.
 """
 
 from __future__ import annotations
@@ -88,20 +88,18 @@ import yaml
 from langchain_core.callbacks import BaseCallbackHandler
 from langsmith import traceable
 
-# Rule 2: top-level imports. If ragas or its LangChain integration is broken,
-# you get a clear ImportError when the module loads, not a silent NaN later.
-from ragas import EvaluationDataset
-from ragas import evaluate as ragas_evaluate
-from ragas.llms import LangchainLLMWrapper
-from ragas.metrics import Faithfulness
+# Rule 2: top-level imports. If LangChain or the scorer is broken, you get a
+# clear ImportError when the module loads, not a silent NaN later.
+from evals.faithfulness import METRIC_NAME, JudgeOutputError
+from evals.faithfulness import score_samples as score_faithfulness
 
 ROOT = Path(__file__).resolve().parent.parent
 THRESHOLDS: dict[str, float] = yaml.safe_load((ROOT / "evals/thresholds.yaml").read_text())
 
-# Ragas Faithfulness issues 2 judge calls per sample (statement extraction,
-# then NLI verdicts). We only REQUIRE >= 1 per sample in the check below, so
-# a future Ragas version that merges the two prompts doesn't break us, while
-# zero calls (the incident) is still caught.
+# Faithfulness issues 2 judge calls per sample (statement extraction, then
+# verdicts). We only REQUIRE >= 1 per sample in the check below, so merging
+# the two prompts later doesn't break us, while zero calls (the incident) is
+# still caught.
 MIN_JUDGE_CALLS_PER_SAMPLE = 1
 
 
@@ -119,8 +117,8 @@ class JudgeCallCounter(BaseCallbackHandler):
 
     LangChain fires ``on_chat_model_start`` for chat models and
     ``on_llm_start`` for completion-style LLMs. Counting both makes this
-    work with either kind of judge. Ragas forwards the ``callbacks`` we
-    pass to ``evaluate`` down to every judge call, which is the same
+    work with either kind of judge. The scorer passes the ``callbacks`` we
+    give it to every judge call, which is the same
     mechanism LangSmith uses to record traces.
     """
 
@@ -149,9 +147,9 @@ def load_eval_set() -> list[dict]:
 
 
 def build_samples(chain) -> list[dict]:
-    """Run the app chain over the eval set and shape rows the way Ragas expects.
+    """Run the app chain over the eval set and shape rows for the scorer.
 
-    Ragas' ``SingleTurnSample`` field names (ragas >= 0.2):
+    Field names (kept from the Ragas ``SingleTurnSample`` convention):
       user_input          the question
       response            what our app answered
       retrieved_contexts  the chunks our retriever returned (list[str])
@@ -171,45 +169,33 @@ def build_samples(chain) -> list[dict]:
     return samples
 
 
-def evaluate_kwargs(judge_llm, callbacks: list[BaseCallbackHandler]) -> dict[str, Any]:
-    """The exact keyword arguments we pass to ``ragas.evaluate``.
+def scorer_kwargs(judge_llm, callbacks: list[BaseCallbackHandler]) -> dict[str, Any]:
+    """The exact keyword arguments we pass to the faithfulness scorer.
 
     Kept in its own function so the contract test can compare these keys
-    with ``inspect.signature(ragas.evaluate)``. That one cheap, offline test
-    would have caught ``llm_judge=`` the moment it was written.
+    with ``inspect.signature(score_faithfulness)``. The same cheap, offline
+    test would have caught the original ``llm_judge=`` the moment it was
+    written.
     """
-    return {
-        "metrics": [Faithfulness()],
-        # Ragas wants its own LLM interface. LangchainLLMWrapper adapts any
-        # LangChain chat model (ChatOpenAI, ChatBedrock, a test fake...) to it.
-        "llm": LangchainLLMWrapper(judge_llm),
-        "callbacks": callbacks,
-        # Ragas defaults to raise_exceptions=False: a failed judge call becomes
-        # NaN for that sample and evaluation continues. That is convenient for
-        # notebooks and dangerous in CI. We want a failure to be loud.
-        "raise_exceptions": True,
-        "show_progress": False,
-    }
+    return {"judge": judge_llm, "callbacks": callbacks}
 
 
 # @traceable makes this function a parent span in LangSmith when tracing is
-# enabled, so every judge call appears nested under "ragas_eval" in the UI.
-# Without tracing env vars it is a no-op, so tests run offline.
-@traceable(run_type="chain", name="ragas_eval")
+# enabled, so every judge call appears nested under "faithfulness_eval" in
+# the UI. Without tracing env vars it is a no-op, so tests run offline.
+@traceable(run_type="chain", name="faithfulness_eval")
 def run_eval(samples: list[dict], judge_llm, extra_callbacks: list[BaseCallbackHandler] | None = None) -> EvalResult:
-    """Score samples with Ragas, then verify the run was real before returning."""
+    """Score samples, then verify the run was real before returning."""
     if not samples:
         # An empty eval set "passes" every threshold vacuously. Refuse it.
         raise EvalHarnessError("No samples to evaluate. Refusing to report a vacuous pass.")
 
     counter = JudgeCallCounter()
-    dataset = EvaluationDataset.from_list(samples)
-    result = ragas_evaluate(dataset, **evaluate_kwargs(judge_llm, [counter, *(extra_callbacks or [])]))
-
-    # result.to_pandas() has one row per sample, one column per metric.
-    df = result.to_pandas()
-    metric_names = [m.name for m in evaluate_kwargs(judge_llm, [])["metrics"]]
-    per_sample = [{name: float(row[name]) for name in metric_names} for _, row in df.iterrows()]
+    try:
+        per_sample = score_faithfulness(samples, **scorer_kwargs(judge_llm, [counter, *(extra_callbacks or [])]))
+    except JudgeOutputError as exc:  # narrow: one known failure, re-raised loudly
+        raise EvalHarnessError(f"Judge output could not be scored: {exc}") from exc
+    metric_names = [METRIC_NAME]
 
     # ---- Harness self-checks (rule 3). Raise, never return a "score". ----
     if counter.calls < MIN_JUDGE_CALLS_PER_SAMPLE * len(samples):
@@ -217,6 +203,8 @@ def run_eval(samples: list[dict], judge_llm, extra_callbacks: list[BaseCallbackH
             f"Judge LLM was called {counter.calls} time(s) for {len(samples)} sample(s). "
             "The metric cannot have been computed. Check the judge configuration and traces."
         )
+    if len(per_sample) != len(samples):
+        raise EvalHarnessError(f"Scorer returned {len(per_sample)} result(s) for {len(samples)} sample(s).")
     bad = [(i, s) for i, s in enumerate(per_sample) for v in s.values() if not math.isfinite(v)]
     if bad:
         raise EvalHarnessError(f"Non-finite per-sample scores (NaN/inf) at {bad}. Scores are not trustworthy.")
@@ -247,7 +235,7 @@ def gate(scores: dict[str, float], thresholds: dict[str, float] = THRESHOLDS) ->
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Live CLI used by .github/workflows/ragas-evals.yml.
+    """Live CLI used by .github/workflows/faithfulness-evals.yml.
 
     Exit codes:  0 = pass,  1 = quality below threshold,  2 = eval harness broken.
     """

@@ -1,4 +1,4 @@
-name: ragas-evals (live)
+name: faithfulness-evals (live)
 
 # -----------------------------------------------------------------------------
 # Live LLM evaluation for cases/02-silent-nan-gate.
@@ -22,7 +22,7 @@ on:
     - cron: "43 7 * * *"   # nightly, off the top of the hour to avoid queue spikes
 
 jobs:
-  live-ragas-eval:
+  live-faithfulness-eval:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -30,7 +30,7 @@ jobs:
         working-directory: cases/02-silent-nan-gate
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      # LangSmith tracing: every chain step and every Ragas judge call shows
+      # LangSmith tracing: every chain step and every judge call shows
       # up as a trace. This is how the incident was found: a 200-sample run
       # with ZERO judge calls in the trace. The harness now checks the call
       # count itself, but traces remain the best debugging tool.
@@ -45,20 +45,20 @@ jobs:
       - run: pip install -r requirements.txt
 
       # Fail fast with a clear message if a secret is missing. Otherwise the
-      # first judge call fails deep inside Ragas with a confusing auth error.
+      # first judge call fails with a confusing auth error.
       - name: Check secrets are configured
         run: |
           test -n "$OPENAI_API_KEY"   || { echo "::error::OPENAI_API_KEY secret is not set"; exit 2; }
           test -n "$LANGSMITH_API_KEY" || echo "::warning::LANGSMITH_API_KEY not set; traces will not be recorded"
 
-      # Exit codes from evals/run_ragas_eval.py:
+      # Exit codes from evals/run_faithfulness_eval.py:
       #   0 = pass, 1 = quality below threshold, 2 = harness broken.
       # GitHub treats any non-zero exit as failure. The ::error annotations
       # tell the reader WHICH kind of failure happened.
-      - name: Run Ragas eval gate
+      - name: Run faithfulness eval gate
         run: |
           set +e
-          python -m evals.run_ragas_eval
+          python -m evals.run_faithfulness_eval
           code=$?
           if [ $code -eq 1 ]; then echo "::error::Quality regression: a metric is below threshold"; fi
           if [ $code -eq 2 ]; then echo "::error::Eval harness error: scores are not trustworthy (see log)"; fi
