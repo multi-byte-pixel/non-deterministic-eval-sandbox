@@ -21,14 +21,14 @@
 #     readable. In a real service, generate a full lockfile (`uv lock`,
 #     `pip-compile`, or `poetry lock`) so transitive packages are pinned too.
 #   * Upgrades arrive as Dependabot PRs (see /.github/dependabot.yml), which
-#     run tests/test_harness_contract.py. If a new ragas renames a kwarg, that
-#     test fails on the upgrade PR, not silently in production.
+#     run the offline tests, so a breaking upgrade fails on the PR, not
+#     silently in production.
+#
+# Ragas was removed later: GHSA-95ww-475f-pr4f (SSRF) had no patched release.
+# The faithfulness metric now lives in evals/faithfulness.py. See SECURITY.md.
 # =============================================================================
 
-ragas==0.4.3
 langchain-core==1.7.6
-# Must stay <0.4 while on ragas 0.4.3 (see note 1 above).
-langchain-community==0.3.31
 langchain-openai==1.7.4
 langsmith==0.14.17
 PyYAML==6.0.3

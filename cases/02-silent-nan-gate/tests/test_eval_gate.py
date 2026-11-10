@@ -1,4 +1,4 @@
-"""End-to-end offline eval: real LangChain chain + real Ragas + scripted judge.
+"""End-to-end offline eval: real LangChain chain + real scorer + scripted judge.
 
 The most important test in this file is ``test_eval_gate_fails_for_unfaithful_answers``.
 Before PR #2 there was only a "passes for good answers" test. A gate that is
@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
-from evals.run_ragas_eval import build_samples, gate, run_eval
+from evals.run_faithfulness_eval import build_samples, gate, run_eval
 from pipeline.retrieval_chain import build_chain
 from tests.fakes import ScriptedJudge
 

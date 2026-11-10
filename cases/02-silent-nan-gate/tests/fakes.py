@@ -3,7 +3,7 @@
 Why fake the judge at all?
 ==========================
 Offline CI must not need API keys (forks don't get secrets, and every run
-would cost money). A *scripted* judge lets us run the REAL Ragas pipeline
+would cost money). A *scripted* judge lets us run the REAL scoring pipeline
 (prompt building, JSON parsing, score aggregation, our harness checks)
 end to end with no network.
 
@@ -34,15 +34,15 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 
 
 class ScriptedJudge(BaseChatModel):
-    """Returns well-formed Ragas Faithfulness JSON with a fixed verdict.
+    """Returns well-formed faithfulness JSON with a fixed verdict.
 
-    Ragas Faithfulness sends two kinds of prompt:
+    evals/faithfulness.py sends two kinds of prompt:
       * statement extraction -> expects {"statements": ["...", ...]}
-      * NLI verdicts         -> expects {"statements": [{"statement", "reason", "verdict"}]}
-    We tell them apart by the word "verdict" in the prompt. That is a
-    deliberately simple heuristic. If a future Ragas changes its prompts,
-    the contract tests fail loudly (the judge output won't parse, and with
-    raise_exceptions=True that raises) rather than silently passing.
+      * verdicts             -> expects {"statements": [{"statement", "reason", "verdict"}]}
+    We tell them apart by the word "verdict" anywhere in the prompt. That is
+    a deliberately simple heuristic. If the prompts change, the tests fail
+    loudly (the judge output won't parse, which raises JudgeOutputError)
+    rather than silently passing.
 
     ``verdict=1`` -> every statement supported   -> faithfulness 1.0
     ``verdict=0`` -> every statement unsupported -> faithfulness 0.0
@@ -57,7 +57,7 @@ class ScriptedJudge(BaseChatModel):
 
     def _generate(self, messages, stop=None, run_manager=None, **kwargs: Any) -> ChatResult:
         self.calls += 1
-        prompt = str(messages[-1].content)
+        prompt = "\n".join(str(m.content) for m in messages)
         if "verdict" in prompt:
             payload = {"statements": [{"statement": "s", "reason": "scripted", "verdict": self.verdict}]}
         else:
