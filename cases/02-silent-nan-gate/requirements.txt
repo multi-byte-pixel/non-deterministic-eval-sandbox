@@ -28,7 +28,7 @@
 # The faithfulness metric now lives in evals/faithfulness.py. See SECURITY.md.
 # =============================================================================
 
-langchain-core==1.7.6
+langchain-core==1.7.7
 langchain-openai==1.7.4
 langsmith==0.14.17
 PyYAML==6.0.3
